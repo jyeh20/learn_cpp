@@ -22,13 +22,34 @@ class Deck {
     void shuffle_deck();
     int rand();
     const Card & deal_card();
-    void new_deck();
-    void new_deck(int n);
+    Card * new_deck();
+    Card * new_deck(int n);
     void print_string();
 };
 
-void Deck::new_deck() {
-  _cards = get_unshuffled_deck();
+Deck::Deck() {
+  _cards = new_deck();
+  _cards_remaining = sizeof(_cards)/sizeof(_cards[0]);
+  _num_decks = 1;
+}
+
+Deck::Deck(int n) {
+  _cards = new_deck(n);
+  _cards_remaining = sizeof(_cards)/sizeof(_cards[0]);
+  _num_decks = n;
+}
+
+Card * Deck::new_deck() {
+  return get_unshuffled_deck();
+}
+
+Card * Deck::new_deck(int n) {
+  Card cards[52 * n];
+  Card * unshuffled_deck = get_unshuffled_deck();
+  for (int i = 0; i < n; ++i) {
+    cards[52 * n + i] = unshuffled_deck[i];
+  }
+  return cards;
 }
 
 void Deck::print_string() {
