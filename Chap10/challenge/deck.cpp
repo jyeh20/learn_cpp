@@ -1,12 +1,14 @@
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
 constexpr char SUITS[] = "SHDC";
-constexpr char VALUES[] = "A123456789TJQK";
+constexpr char VALUES[] = "A23456789TJQK";
+constexpr int deck_size = 52;
 
 struct Card {
-  char suit : 4;
-  int value : 4;
+  char suit;
+  int value;
 };
 
 Card* get_unshuffled_deck();
@@ -20,49 +22,70 @@ class Deck {
     Deck(int n);
     ~Deck();
     void shuffle_deck();
-    int rand();
+    void insert_card(int to, int from);
     const Card & deal_card();
-    Card * new_deck();
-    Card * new_deck(int n);
+    void new_deck();
+    void new_deck(int n);
     void print_string();
 };
 
 Deck::Deck() {
-  _cards = new_deck();
-  _cards_remaining = sizeof(_cards)/sizeof(_cards[0]);
+  new_deck();
+  _cards_remaining = deck_size;
   _num_decks = 1;
 }
 
 Deck::Deck(int n) {
-  _cards = new_deck(n);
-  _cards_remaining = sizeof(_cards)/sizeof(_cards[0]);
+  new_deck(n);
+  _cards_remaining = deck_size * n;
   _num_decks = n;
 }
 
-Card * Deck::new_deck() {
-  return get_unshuffled_deck();
+Deck::~Deck() {
+  _cards = nullptr;
 }
 
-Card * Deck::new_deck(int n) {
-  Card cards[52 * n];
+const Card & Deck::deal_card() {
+  --_cards_remaining;
+  return _cards[_cards_remaining];
+}
+
+void Deck::shuffle_deck() {
+  for (int i = _cards_remaining; i > 0; i--) {
+    int random_num = rand() % i;
+    insert_card(i-1, random_num);
+  }
+}
+
+void Deck::new_deck() {
+  _cards = get_unshuffled_deck();
+}
+
+void Deck::new_deck(int n) {
+  Card cards[deck_size * n];
   Card * unshuffled_deck = get_unshuffled_deck();
   for (int i = 0; i < n; ++i) {
-    cards[52 * n + i] = unshuffled_deck[i];
+    cards[deck_size * n + i] = unshuffled_deck[i];
   }
-  return cards;
+  _cards = cards;
 }
 
 void Deck::print_string() {
-  for (int i = 0; i < sizeof(_cards); ++i) {
-    Card c = _cards[i];
-    printf("%c%c ", c.suit, c.value);
+  if (_cards_remaining <= 0) {
+    puts("[]");
+    return;
   }
+  for (int i = 0; i < _cards_remaining; ++i) {
+    Card c = _cards[i];
+    printf("%d: [%c%c]\n", i, c.suit, c.value);
+  }
+    puts("");
 }
 
 // Helpers
 
 Card * get_unshuffled_deck() {
-  Card deck[52];
+  static Card deck[deck_size];
   int index = 0;
   for (int i = 0; i < strlen(SUITS); ++i) {
     char suit = SUITS[i];
@@ -70,13 +93,26 @@ Card * get_unshuffled_deck() {
       Card card;
       card.suit = suit;
       card.value = VALUES[j];
-      deck[++index] = card;
+      deck[index++] = card;
     }
   }
   return deck;
 }
 
+void Deck::insert_card(int to, int from) {
+  Card temp = _cards[to];
+  _cards[to] = _cards[from];
+  _cards[from] = temp;
+}
+
 int main() {
-  get_unshuffled_deck();
+  Deck d;
+  d.shuffle_deck();
+  d.print_string();
+  for (int i = 0; i < 52; i++) {
+    Card c = d.deal_card();
+    printf("\nRemoving Card\n%c%c\n", c.suit, c.value);
+  }
+  d.print_string();
   return 1;
 }
